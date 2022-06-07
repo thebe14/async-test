@@ -1,0 +1,27 @@
+quarkus:
+  log:
+    level: INFO
+    min-level: DEBUG
+    console:
+      enable: true
+      level: INFO
+      format: "%d{HH:mm:ss} %-5p [%c{2.}]] (%t) %s%e%n"
+    file:
+      enable: true
+      path: ./async-test.log
+      level: INFO
+      format: "%d{HH:mm:ss} %-5p [%c{2.}]] (%t) %s%e%n"
+  swagger-ui:
+    always-include: true
+    path: swagger-ui
+    theme: flattop
+  smallrye-openapi:
+    path: /openapi
+    info-version: 1.0.0
+  jackson:
+    fail-on-unknown-properties: false
+  http:
+    port: 8080
+    cors: true
+  tls:
+    trust-all: true
