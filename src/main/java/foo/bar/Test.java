@@ -47,23 +47,23 @@ public class Test implements ITest {
         Uni<Boolean> result = Uni.createFrom().nullItem(); // <- This gets returned, handlers are not called
 
         result
-                .ifNoItem()
+            .ifNoItem()
                 .after(Duration.ofMillis(2000))
                 .failWith(new RuntimeException("timeout"))
-                .chain(unused -> {
-                    // Ignore initial dummy placeholder, start the actual processing here
-                    LOG.info("Start processing");
-                    Uni<RequestDetails> info = this.postman.echo();
-                    return info;
-                })
-                .chain(s -> {
-                    // Got result of processing, turn it into what we have to return
-                    LOG.info("Finished processing");
-                    return Uni.createFrom().item(new Boolean(true));
-                })
-                .onFailure().invoke(e -> {
-                    LOG.error("Oops: " + e);
-                });
+            .chain(unused -> {
+                // Ignore initial dummy placeholder, start the actual processing here
+                LOG.info("Start processing");
+                Uni<RequestDetails> info = this.postman.echo();
+                return info;
+            })
+            .chain(s -> {
+                // Got result of processing, turn it into what we have to return
+                LOG.info("Finished processing");
+                return Uni.createFrom().item(new Boolean(true));
+            })
+            .onFailure().invoke(e -> {
+                LOG.error("Oops: " + e);
+            });
 
         return result;
     }
