@@ -3,12 +3,12 @@ package foo.bar;
 import io.smallrye.mutiny.Uni;
 import org.eclipse.microprofile.rest.client.RestClientBuilder;
 import org.eclipse.microprofile.rest.client.RestClientDefinitionException;
-import org.eclipse.microprofile.rest.client.inject.RestClient;
 import org.jboss.logging.Logger;
 
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.time.Duration;
+import java.util.Random;
 
 import postman.com.Postman;
 import postman.com.model.RequestDetails;
@@ -17,12 +17,15 @@ import postman.com.model.RequestDetails;
 public class Test implements ITest {
 
     private static final Logger LOG = Logger.getLogger(Test.class);
+    private static Random random = new Random();
 
-    @RestClient
-    Postman postman;
+    Postman postman = null;
+
+    private String name;
 
 
-    public Test() {
+    public Test(String name) {
+        this.name = name;
         try {
             // Create the REST client for the transfer service
             URL url = new URL("https://postman-echo.com");
@@ -38,59 +41,31 @@ public class Test implements ITest {
         }
     }
 
-    public Uni<Boolean> test1() {
+    public String getName() { return this.name; }
+
+    public Uni<String> test() {
         if(null == this.postman) {
             LOG.error("No client");
             return Uni.createFrom().failure(new RuntimeException("client"));
         }
 
-        Uni<Boolean> result = Uni.createFrom().nullItem(); // <- This gets returned, handlers are not called
-
-        result
+        var result = Uni.createFrom().nullItem()
             .ifNoItem()
                 .after(Duration.ofMillis(2000))
                 .failWith(new RuntimeException("timeout"))
             .chain(unused -> {
                 // Ignore initial dummy placeholder, start the actual processing here
-                LOG.info("Start processing");
-                Uni<RequestDetails> info = this.postman.echo();
-                return info;
+                LOG.infof("Start test %s", this.name);
+                return this.postman.echo();
             })
-            .chain(s -> {
+            .chain(info -> {
                 // Got result of processing, turn it into what we have to return
-                LOG.info("Finished processing");
-                return Uni.createFrom().item(new Boolean(true));
+                var testResult = random.nextBoolean();
+                LOG.infof("Finished test %s (%s)", this.name, testResult ? "true" : "false");
+                return testResult ? Uni.createFrom().item(this.name) : Uni.createFrom().nullItem();
             })
             .onFailure().invoke(e -> {
-                LOG.error("Oops: " + e);
-            });
-
-        return result;
-    }
-
-    public Uni<Boolean> test2() {
-        if(null == this.postman) {
-            LOG.error("No client");
-            return Uni.createFrom().failure(new RuntimeException("client"));
-        }
-
-        Uni<Boolean> result = Uni.createFrom().nullItem()
-            .ifNoItem()
-                .after(Duration.ofMillis(2000))
-                .failWith(new RuntimeException("timeout"))
-            .chain(unused -> {
-                // Ignore initial dummy placeholder, start the actual processing here
-                LOG.info("Start processing");
-                Uni<RequestDetails> info = this.postman.echo();
-                return info;
-            })
-            .chain(s -> {
-                // Got result of processing, turn it into what we have to return
-                LOG.info("Finished processing");
-                return Uni.createFrom().item(new Boolean(true));
-            })
-            .onFailure().invoke(e -> {
-                LOG.error("Oops: " + e);
+                LOG.errorf("Error in test %s: " + e, this.name);
             });
 
         return result;

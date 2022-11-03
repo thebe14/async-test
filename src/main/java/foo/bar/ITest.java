@@ -5,6 +5,6 @@ import io.smallrye.mutiny.Uni;
 
 public interface ITest {
 
-    public abstract Uni<Boolean> test1();
-    public abstract Uni<Boolean> test2();
+    public abstract Uni<String> test();
+    public abstract String getName();
 }

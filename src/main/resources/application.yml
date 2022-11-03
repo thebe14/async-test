@@ -21,7 +21,7 @@ quarkus:
   jackson:
     fail-on-unknown-properties: false
   http:
-    port: 8080
+    port: 8085
     cors: true
   tls:
     trust-all: true
