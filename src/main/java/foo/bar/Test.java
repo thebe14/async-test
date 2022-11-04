@@ -15,23 +15,17 @@ import postman.com.model.RequestDetails;
 
 
 public class Test implements ITest {
-
     private static final Logger LOG = Logger.getLogger(Test.class);
     private static Random random = new Random();
-
     Postman postman = null;
-
     private String name;
-
 
     public Test(String name) {
         this.name = name;
         try {
             // Create the REST client for the transfer service
             URL url = new URL("https://postman-echo.com");
-            this.postman = RestClientBuilder.newBuilder()
-                            .baseUrl(url)
-                            .build(Postman.class);
+            this.postman = RestClientBuilder.newBuilder().baseUrl(url).build(Postman.class);
         }
         catch (MalformedURLException e) {
             LOG.error(e.getMessage());
@@ -54,7 +48,7 @@ public class Test implements ITest {
                 .after(Duration.ofMillis(2000))
                 .failWith(new RuntimeException("timeout"))
             .chain(unused -> {
-                // Ignore initial dummy placeholder, start the actual processing here
+                // Ignore initial dummy placeholder, start the query here
                 LOG.infof("Start test %s", this.name);
                 return this.postman.echo();
             })

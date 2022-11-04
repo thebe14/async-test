@@ -52,16 +52,18 @@ public class MyResource {
                     LOG.infof("Found candidate (%s)", testResult);
 
                     // TODO: Cancel upstream
+
+                    return Uni.createFrom().item(true);
                 }
 
-                return Uni.createFrom().item(testResult);
+                return Uni.createFrom().item(false);
             })
             .onFailure().invoke(e -> {
                 LOG.error("Cannot pick first valid");
             })
             .collect()
             .in(() -> Boolean.FALSE, (acc, candidate) -> {
-                acc = acc || (null != candidate && !candidate.isBlank());
+                acc = acc || candidate;
             });
 
         return result;
