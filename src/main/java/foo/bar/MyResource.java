@@ -3,26 +3,22 @@ package foo.bar;
 import io.smallrye.mutiny.Multi;
 import io.smallrye.mutiny.Uni;
 import org.jboss.logging.Logger;
-import org.jboss.resteasy.reactive.RestHeader;
+import org.reactivestreams.Subscription;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.atomic.AtomicReference;
-import javax.inject.Inject;
+import java.util.*;
+import javax.enterprise.context.RequestScoped;
 import javax.ws.rs.*;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.Response.Status;
 
 
+@RequestScoped
 @Path("/")
 public class MyResource {
 
     private static final Logger LOG = Logger.getLogger(MyResource.class);
 
-    List<ITest> tests;
+    private List<ITest> tests;
+    //private Map<String, Subscription> subscriptions;
+    private Subscription subscription;
 
     public MyResource() {
         this.tests = Arrays.asList(
@@ -38,9 +34,16 @@ public class MyResource {
     @Path("/pick-first")
     public Uni<Boolean> pickFirstValid() {
 
-        //AtomicReference<Response> result = new AtomicReference<>();
+        // Create unique ID for this call
+        String callId = UUID.randomUUID().toString();
+
         var result = Multi.createFrom().iterable(this.tests)
 
+            .onSubscription().invoke(sub -> {
+                // Save the subscription, so we can cancel later
+                LOG.info("Subscribed");
+                this.subscription = sub;
+            })
             .onItem().transformToUniAndConcatenate(test -> {
                 // Do test
                 LOG.infof("Calling test %s", test.getName());
@@ -51,7 +54,9 @@ public class MyResource {
                 if(null != testResult && !testResult.isBlank()) {
                     LOG.infof("Found candidate (%s)", testResult);
 
-                    // TODO: Cancel upstream
+                    // Cancel upstream
+                    if(null != this.subscription)
+                        subscription.cancel();
 
                     return Uni.createFrom().item(true);
                 }
