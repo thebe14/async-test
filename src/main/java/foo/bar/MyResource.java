@@ -69,7 +69,7 @@ public class MyResource {
             .in(BooleanAccumulator::new, (acc, candidate) -> {
                 acc.accumulateAny(candidate);
             })
-            .onItem().transform(acc -> acc.get());
+            .onItem().transform(BooleanAccumulator::get);
 
         return result;
     }
