@@ -2,6 +2,7 @@ package foo.bar;
 
 import io.smallrye.mutiny.Multi;
 import io.smallrye.mutiny.Uni;
+import io.smallrye.mutiny.tuples.Tuple2;
 import org.jboss.logging.Logger;
 import org.reactivestreams.Subscription;
 
@@ -30,9 +31,7 @@ public class MyResource {
         );
     }
 
-    @GET
-    @Path("/pick-first")
-    public Uni<Boolean> pickFirstValid() {
+    private Uni<Boolean> pickFirstValidImpl() {
 
         // Create unique ID for this call
         String callId = UUID.randomUUID().toString();
@@ -69,6 +68,26 @@ public class MyResource {
             .collect()
             .in(() -> Boolean.FALSE, (acc, candidate) -> {
                 acc = acc || candidate;
+            });
+
+        return result;
+    }
+
+    @GET
+    @Path("/pick-first")
+    public Uni<Boolean> pickFirstValid() {
+
+        Uni<Boolean> result = pickFirstValidImpl()
+
+            .chain(success -> {
+                // Check result
+                if(!success)
+                    LOG.error("No valid candidate found");
+
+                return Uni.createFrom().item(success);
+            })
+            .onFailure().invoke(e -> {
+                LOG.error("Ooops!");
             });
 
         return result;
