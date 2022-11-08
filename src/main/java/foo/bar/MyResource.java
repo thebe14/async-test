@@ -66,9 +66,10 @@ public class MyResource {
                 LOG.error("Cannot pick first valid");
             })
             .collect()
-            .in(() -> Boolean.FALSE, (acc, candidate) -> {
-                acc = acc || candidate;
-            });
+            .in(BooleanAccumulator::new, (acc, candidate) -> {
+                acc.accumulateAny(candidate);
+            })
+            .onItem().transform(acc -> acc.get());
 
         return result;
     }
@@ -82,7 +83,7 @@ public class MyResource {
             .chain(success -> {
                 // Check result
                 if(!success)
-                    LOG.error("No valid candidate found");
+                    LOG.info("No valid candidate found");
 
                 return Uni.createFrom().item(success);
             })
